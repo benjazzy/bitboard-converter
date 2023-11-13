@@ -38,16 +38,16 @@ impl std::fmt::Display for Board {
             }
 
             // Print the bitboard
-            for col in 0..4 {
+            let col = gen_col(|col| {
                 let idx = (row * 4) + col;
-
-                let symbol = if self.0 & (1 << idx) > 0 {
-                    "xx".green()
+                if self.0 & (1 << idx) > 0 {
+                    "xx".green().to_string()
                 } else {
-                    "oo".red()
-                };
-                write!(f, "{}  ", symbol)?;
-            }
+                    "oo".red().to_string()
+                }
+            });
+
+            write!(f, "{}", col)?;
 
             // Align the end of the bitboard print
             if !indent_line {
@@ -60,24 +60,41 @@ impl std::fmt::Display for Board {
                 write!(f, "  ")?;
             }
 
-            // Print key
-            for col in 0..4 {
+            // Print the board indexes
+            let col = gen_col(|col| {
                 let idx = (row * 4) + col;
                 let fmt_idx = format!("{:0>2}", idx);
-                let colord_idx = if self.0 & (1 << idx) > 0 {
-                    fmt_idx.green()
+                if self.0 & (1 << idx) > 0 {
+                    fmt_idx.green().to_string()
                 } else {
-                    fmt_idx.red()
-                };
-
-                write!(f, "{}  ", colord_idx)?;
-            }
+                    fmt_idx.red().to_string()
+                }
+            });
+            write!(f, "{}", col)?;
 
             writeln!(f)?;
         }
 
         Ok(())
     }
+}
+
+fn gen_col_loop<F>(i: u32, prev: String, formatter: F) -> String
+where
+    F: Fn(u32) -> String,
+{
+    if i >= 4 {
+        return prev;
+    }
+
+    gen_col_loop(i + 1, format!("{prev}  {}", formatter(i)), formatter)
+}
+
+fn gen_col<F>(formatter: F) -> String
+where
+    F: Fn(u32) -> String,
+{
+    gen_col_loop(0, String::new(), formatter)
 }
 
 fn read_input(board: Board) -> ControlFlow<Board, Board> {
@@ -108,7 +125,7 @@ fn prompt_loop(board: Board) -> Board {
 
     match read_input(board) {
         ControlFlow::Continue(b) => prompt_loop(b),
-        ControlFlow::Break(b) => return b,
+        ControlFlow::Break(b) => b,
     }
 }
 
