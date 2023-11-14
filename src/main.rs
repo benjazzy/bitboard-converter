@@ -1,4 +1,4 @@
-use std::{io, ops::ControlFlow};
+use std::{env, io, ops::ControlFlow};
 
 use colored::Colorize;
 
@@ -129,8 +129,28 @@ fn prompt_loop(board: Board) -> Board {
     }
 }
 
+fn starting_board() -> Result<Board, String> {
+    let args: Vec<String> = env::args().collect();
+    if let Some(start) = args.get(1) {
+        match start.parse::<u32>() {
+            Ok(s) => return Ok(s.into()),
+            Err(e) => return Err(e.to_string()),
+        }
+    } else {
+        return Ok(Board::new());
+    }
+}
+
 fn main() {
-    let finished_board = prompt_loop(Board::new());
+    let starting_board = match starting_board() {
+        Ok(b) => b,
+        Err(e) => {
+            println!("Problem getting starting board from input: {}", e);
+            return;
+        }
+    };
+
+    let finished_board = prompt_loop(starting_board);
 
     println!("Bitboard: {}", finished_board.to_uint());
 }
